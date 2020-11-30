@@ -4,4 +4,9 @@
  */
 function namify(users) {
   // ваш код...
+  let arr = [];
+  users.map(function(obj){
+      arr.push(obj.name);
+  });
+  return arr;
 }
