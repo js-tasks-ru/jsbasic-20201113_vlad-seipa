@@ -4,9 +4,8 @@
  */
 function makeDiagonalRed(table) {
     let td_index = 0;
-    let rows_arr = Array.from(table.rows);
 
-    for (let i of rows_arr){
+    for (let i of table.rows){
         i.cells[td_index].style.background = 'red';
         td_index += 1;
     }
