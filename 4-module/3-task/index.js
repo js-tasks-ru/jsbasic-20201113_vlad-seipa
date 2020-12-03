@@ -26,7 +26,7 @@ function highlight(table) {
         };
 
         if (+i.children[1].innerHTML < 18){
-            console.log(i.style.textDecoration = "line-through");
+            i.style.textDecoration = "line-through"
         };
     };
 }
