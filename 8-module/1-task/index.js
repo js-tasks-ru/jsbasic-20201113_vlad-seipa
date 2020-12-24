@@ -55,7 +55,7 @@ export default class CartIcon {
       document.querySelector('.container').getBoundingClientRect().right + 20,
       document.documentElement.clientWidth - this.elem.offsetWidth - 10
     );
-      //
+
     let css = `
     position: fixed;
     top: 50px;
