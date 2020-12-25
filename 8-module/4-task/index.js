@@ -8,28 +8,69 @@ export default class Cart {
 
   constructor(cartIcon) {
     this.cartIcon = cartIcon;
-
+    this.modal = new Modal();
     this.addEventListeners();
   }
 
   addProduct(product) {
     // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    let productIsFinded = this.cartItems.find((obj) => obj.product.id === product.id);
+    if (productIsFinded){
+      productIsFinded.count += 1;
+    } else {
+      productIsFinded = {
+        product: product,
+        count: 1,
+      };
+
+      this.cartItems.push(productIsFinded);
+    };
+
+    this.onProductUpdate(productIsFinded);
   }
 
   updateProductCount(productId, amount) {
     // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    let productIsFinded = this.cartItems.find((obj) => obj.product.id === productId);
+    if (productIsFinded){
+      productIsFinded.count += amount;
+
+      if (productIsFinded.count === 0) this.cartItems.splice(this.cartItems.indexOf(productIsFinded), 1);
+
+    };
+
+    this.onProductUpdate(productIsFinded);
   }
 
   isEmpty() {
     // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    if (this.cartItems.length === 0){
+      return true;
+    } else {
+      return false;
+    }
   }
 
   getTotalCount() {
     // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    let totalCount = 0;
+    if (this.cartItems.length !== 0){
+      for (const cartItem of this.cartItems){
+        totalCount += cartItem.count;
+      };
+    };
+    return totalCount;
   }
 
   getTotalPrice() {
     // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    let totalPrice = 0;
+    if (this.cartItems.length !== 0){
+      for (const cartItem of this.cartItems){
+        totalPrice += cartItem.product.price*cartItem.count;
+      };
+    };
+    return totalPrice;
   }
 
   renderProduct(product, count) {
@@ -85,17 +126,92 @@ export default class Cart {
 
   renderModal() {
     // ...ваш код
+    this.modal.setTitle("Your order");
+    this.cartRender = document.createElement("DIV");
+    for (let productItem of this.cartItems){
+      this.cartRender.append(this.renderProduct(productItem.product, productItem.count));
+    };
+    this.cartRender.append(this.renderOrderForm());
+
+    this.modal.setBody(this.cartRender);
+    this.modal.open();
+
+    this.cartRender.addEventListener("click", event => {
+      if (event.target.closest(".cart-counter__button_minus")){
+        let productId = event.target.closest(".cart-product").dataset.productId;
+        this.updateProductCount(productId, -1);
+      };
+  
+      if (event.target.closest(".cart-counter__button_plus")){
+        let productId = event.target.closest(".cart-product").dataset.productId;
+        this.updateProductCount(productId, 1);
+      }
+    });
+
+    document.querySelector(".cart-form").addEventListener("submit", event => {
+      this.onSubmit(event);
+    });
   }
 
   onProductUpdate(cartItem) {
     // ...ваш код
+    if (document.body.classList.contains("is-modal-open")){
+      if (cartItem.count === 0){
+        this.cartRender.innerHTML = "";
+        for (let productItem of this.cartItems){
+          this.cartRender.append(this.renderProduct(productItem.product, productItem.count));
+        };
+        this.cartRender.append(this.renderOrderForm());
+      } else {
+        let productId = cartItem.product.id;
+        let productCount = this.cartRender.querySelector(`[data-product-id="${productId}"] .cart-counter__count`);
+        let productPrice = this.cartRender.querySelector(`[data-product-id="${productId}"] .cart-product__price`);
+        let infoPrice = this.cartRender.querySelector(`.cart-buttons__info-price`);
+  
+        productCount.innerHTML = cartItem.count;
+        productPrice.innerHTML = `€${(cartItem.product.price*cartItem.count).toFixed(2)}`;
+        
+        infoPrice.innerHTML = `€${(this.getTotalPrice()).toFixed(2)}`;
+      };
 
+      if (this.isEmpty()){
+        this.modal.close();
+      };
+    }
     this.cartIcon.update(this);
   }
 
   onSubmit(event) {
     // ...ваш код
-  };
+    event.preventDefault();
+    const submitBtn = document.querySelector(".cart-buttons__button");
+    submitBtn.classList.add("is-loading");
+    let orderForm = new FormData(document.querySelector(".cart-form"));
+
+    fetch("https://httpbin.org/post", {
+      method: "POST",
+      body: orderForm
+    })
+    .then(response => {
+      if (!response.ok) throw Error(response.statusText);
+      return response;
+    })
+    .then(() => {
+      submitBtn.classList.remove("is-loading");
+      this.modal.setTitle("Success!");
+      this.cartItems = [];
+      let communicator = document.createElement("DIV");
+      communicator.classList.add("modal__body-inner");
+      communicator.insertAdjacentHTML("beforeend", `
+        <p>
+        Order successful! Your order is being cooked :) <br>
+        We’ll notify you about delivery time shortly.<br>
+        <img src="/assets/images/delivery.gif">
+        </p>
+      `)
+      this.modal.setBody(communicator);
+    });
+  }
 
   addEventListeners() {
     this.cartIcon.elem.onclick = () => this.renderModal();
