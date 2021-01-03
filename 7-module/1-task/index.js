@@ -71,11 +71,11 @@ export default class RibbonMenu {
         };
         categoryItem.classList.add("ribbon__item_active");
 
-        ribbon.dispatchEvent(new CustomEvent('ribbon-select', {
+        let ev = new CustomEvent('ribbon-select', {
           detail: categoryItem.dataset.id,
           bubbles: true
         })
-        );
+        ribbon.dispatchEvent(ev);
 
       } else {
         return
